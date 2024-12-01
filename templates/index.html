@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DDoS Detector</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>DDoS Attack Detector</h1>
+    <div>
+        <p><b>Connections:</b> <span id="connections">0</span></p>
+        <p><b>Unique IPs:</b> <span id="unique_ips">0</span></p>
+    </div>
+    <button onclick="startMonitoring()">Start Monitoring</button>
+    <button onclick="stopMonitoring()">Stop Monitoring</button>
+    <button onclick="simulateTraffic('normal')">Simulate Normal Traffic</button>
+    <button onclick="simulateTraffic('attack')">Simulate HTTP Flood Attack</button>
+
+    <h2>Alerts</h2>
+    <div id="alerts"></div>
+    <script>
+        const socket = io();
+
+        // Socket.IO connection handlers
+        socket.on("connect", () => console.log("Socket.IO connected."));
+        socket.on("disconnect", () => console.error("Socket.IO disconnected."));
+        socket.on("update", data => {
+            console.log("Update received:", data);  // Debugging
+            document.getElementById("connections").innerText = data.connections;
+            document.getElementById("unique_ips").innerText = data.unique_ips;
+        });
+        socket.on("alert", data => {
+            console.log("Alert received:", data.message);  // Debugging
+            const alertsDiv = document.getElementById("alerts");
+            const newAlert = document.createElement("p");
+            newAlert.innerText = data.message;
+            alertsDiv.appendChild(newAlert);
+        });
+
+        function startMonitoring() {
+            fetch("/start_monitoring", { method: "POST" });
+        }
+
+        function stopMonitoring() {
+            fetch("/stop_monitoring", { method: "POST" });
+        }
+
+        function simulateTraffic(type) {
+            const url = type === 'normal' ? '/simulate/normal' : '/simulate/attack';
+            fetch(url, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => alert(data.status))
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
